@@ -2,6 +2,7 @@ from fastapi import FastAPI
 
 from app.database.connection import Base, engine
 from app.models.analysis import Analysis
+from app.routes.resume import router as resume_router
 
 
 Base.metadata.create_all(bind=engine)
@@ -12,7 +13,7 @@ app = FastAPI(
     description="AI-powered Resume Analysis API",
     version="1.0.0"
 )
-
+app.include_router(resume_router)
 
 @app.get("/")
 def root():
