@@ -103,17 +103,38 @@ async def analyze_resume_api(
 )
 
         analysis_record = Analysis(
-            resume_name=file.filename,
-            job_description=job_description,
-            ats_score=score_result["ats_score"],
-            match_percentage=score_result["keyword_score"],
-            matching_skills=json.dumps(
-                score_result["matching_skills"]
-            ),
-            missing_skills=json.dumps(
-                score_result["missing_skills"]
-            )
-        )
+    resume_name=file.filename,
+    job_description=job_description,
+
+    # Scores
+    ats_score=score_result["ats_score"],
+    keyword_score=score_result["keyword_score"],
+    match_percentage=score_result["keyword_score"],
+    similarity_score=score_result["similarity_score"],
+    semantic_similarity_score=score_result["semantic_similarity_score"],
+    combined_similarity_score=score_result["combined_similarity_score"],
+    parseability_score=score_result["parseability_score"],
+    section_score=score_result["section_score"],
+    experience_impact_score=score_result["experience_impact_score"],
+
+    # Skills
+    matching_skills=json.dumps(
+        score_result["matching_skills"]
+    ),
+    missing_skills=json.dumps(
+        score_result["missing_skills"]
+    ),
+
+    # Complete analysis
+    resume_analysis=json.dumps(
+        resume_analysis
+    ),
+
+    # Suggestions
+    suggestions=json.dumps(
+        suggestions
+    )
+)
 
         db.add(analysis_record)
         db.commit()
@@ -149,12 +170,60 @@ def get_analysis_history(
     )
 
     return [
-        {
-            "id": analysis.id,
-            "resume_name": analysis.resume_name,
+    {
+        "id": analysis.id,
+        "resume_name": analysis.resume_name,
+        "ats_score": analysis.ats_score,
+        "keyword_score": analysis.keyword_score,
+        "match_percentage": analysis.match_percentage,
+        "created_at": analysis.created_at
+    }
+    for analysis in analyses
+]
+@router.get("/history/{analysis_id}")
+def get_analysis_details(
+    analysis_id: int,
+    db: Session = Depends(get_db)
+):
+    analysis = (
+        db.query(Analysis)
+        .filter(Analysis.id == analysis_id)
+        .first()
+    )
+
+    if not analysis:
+        raise HTTPException(
+            status_code=404,
+            detail="Analysis not found"
+        )
+
+    return {
+        "message": "Analysis details fetched successfully",
+        "analysis_id": analysis.id,
+        "filename": analysis.resume_name,
+
+        "analysis": json.loads(
+            analysis.resume_analysis or "{}"
+        ),
+
+        "score": {
             "ats_score": analysis.ats_score,
-            "match_percentage": analysis.match_percentage,
-            "created_at": analysis.created_at
-        }
-        for analysis in analyses
-    ]
+            "keyword_score": analysis.keyword_score,
+            "similarity_score": analysis.similarity_score,
+            "semantic_similarity_score": analysis.semantic_similarity_score,
+            "combined_similarity_score": analysis.combined_similarity_score,
+            "parseability_score": analysis.parseability_score,
+            "section_score": analysis.section_score,
+            "experience_impact_score": analysis.experience_impact_score,
+            "matching_skills": json.loads(
+                analysis.matching_skills or "[]"
+            ),
+            "missing_skills": json.loads(
+                analysis.missing_skills or "[]"
+            )
+        },
+
+        "suggestions": json.loads(
+            analysis.suggestions or "[]"
+        )
+    }

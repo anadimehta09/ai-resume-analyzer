@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.database.connection import Base, engine
 from app.models.analysis import Analysis
@@ -13,7 +14,20 @@ app = FastAPI(
     description="AI-powered Resume Analysis API",
     version="1.0.0"
 )
+
+
+# Allow requests from React frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 app.include_router(resume_router)
+
 
 @app.get("/")
 def root():
