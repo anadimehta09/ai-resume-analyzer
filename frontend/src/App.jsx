@@ -14,7 +14,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * --------------------------------------------------------------
  */
 
-const API_BASE = "https://ai-resume-analyzer-1-1y7t.onrender.com";
+const API_BASE = "https://ai-resume-analyzer-1-1yt7.onrender.com";
 const ACCEPTED_EXTENSIONS = [".pdf", ".docx"];
 const MAX_FILE_SIZE_MB = 10;
 
