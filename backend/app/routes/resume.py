@@ -1,7 +1,18 @@
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from fastapi import (
+    APIRouter,
+    UploadFile,
+    File,
+    Form,
+    HTTPException,
+    Depends
+)
+from sqlalchemy.orm import Session
 from pathlib import Path
 import shutil
+import json
 
+from app.database.connection import get_db
+from app.models.analysis import Analysis
 from app.services.parser import extract_resume_text
 from app.services.analyzer import analyze_resume
 from app.services.scorer import score_resume
@@ -46,8 +57,10 @@ async def upload_resume(file: UploadFile = File(...)):
 @router.post("/analyze")
 async def analyze_resume_api(
     file: UploadFile = File(...),
-    job_description: str = Form(...)
+    job_description: str = Form(...),
+    db: Session = Depends(get_db)
 ):
+
     file_extension = Path(file.filename).suffix.lower()
 
     if file_extension not in ALLOWED_EXTENSIONS:
@@ -84,8 +97,26 @@ async def analyze_resume_api(
             resume_analysis
         )
 
+        analysis_record = Analysis(
+            resume_name=file.filename,
+            job_description=job_description,
+            ats_score=score_result["ats_score"],
+            match_percentage=score_result["keyword_score"],
+            matching_skills=json.dumps(
+                score_result["matching_skills"]
+            ),
+            missing_skills=json.dumps(
+                score_result["missing_skills"]
+            )
+        )
+
+        db.add(analysis_record)
+        db.commit()
+        db.refresh(analysis_record)
+
         return {
             "message": "Resume analyzed successfully",
+            "analysis_id": analysis_record.id,
             "filename": file.filename,
             "analysis": resume_analysis,
             "score": score_result
@@ -95,6 +126,8 @@ async def analyze_resume_api(
         raise
 
     except Exception as e:
+        db.rollback()
+
         raise HTTPException(
             status_code=500,
             detail=f"Resume analysis failed: {str(e)}"
