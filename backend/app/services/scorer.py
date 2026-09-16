@@ -1,4 +1,5 @@
 import re
+from app.services.nlp_processor import preprocess_text
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -78,13 +79,18 @@ def calculate_similarity(
     job_description: str
 ) -> float:
     """
-    Calculate text similarity using TF-IDF
-    and cosine similarity.
+    Calculate semantic text similarity using
+    NLP preprocessing, TF-IDF and cosine similarity.
     """
 
-    documents = [
-        resume_text,
+    processed_resume = preprocess_text(resume_text)
+    processed_job_description = preprocess_text(
         job_description
+    )
+
+    documents = [
+        processed_resume,
+        processed_job_description
     ]
 
     vectorizer = TfidfVectorizer(
@@ -105,8 +111,6 @@ def calculate_similarity(
         float(similarity_score) * 100,
         2
     )
-
-
 def score_resume(
     resume_text: str,
     job_description: str,
