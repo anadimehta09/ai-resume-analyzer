@@ -1,6 +1,10 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from pathlib import Path
 import shutil
+
+from app.services.parser import extract_resume_text
+from app.services.analyzer import analyze_resume
+from app.services.scorer import score_resume
 
 
 router = APIRouter(
@@ -37,3 +41,61 @@ async def upload_resume(file: UploadFile = File(...)):
         "filename": file.filename,
         "file_path": str(file_path)
     }
+
+
+@router.post("/analyze")
+async def analyze_resume_api(
+    file: UploadFile = File(...),
+    job_description: str = Form(...)
+):
+    file_extension = Path(file.filename).suffix.lower()
+
+    if file_extension not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail="Only PDF and DOCX files are allowed"
+        )
+
+    if not job_description.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="Job description cannot be empty"
+        )
+
+    file_path = UPLOAD_DIR / file.filename
+
+    with file_path.open("wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    try:
+        resume_text = extract_resume_text(str(file_path))
+
+        if not resume_text:
+            raise HTTPException(
+                status_code=400,
+                detail="Could not extract text from resume"
+            )
+
+        resume_analysis = analyze_resume(resume_text)
+
+        score_result = score_resume(
+            resume_text,
+            job_description,
+            resume_analysis
+        )
+
+        return {
+            "message": "Resume analyzed successfully",
+            "filename": file.filename,
+            "analysis": resume_analysis,
+            "score": score_result
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Resume analysis failed: {str(e)}"
+        )
