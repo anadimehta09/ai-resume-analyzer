@@ -16,6 +16,7 @@ from app.models.analysis import Analysis
 from app.services.parser import extract_resume_text
 from app.services.analyzer import analyze_resume
 from app.services.scorer import score_resume
+from app.services.suggestions import generate_suggestions
 
 
 router = APIRouter(
@@ -96,6 +97,10 @@ async def analyze_resume_api(
             job_description,
             resume_analysis
         )
+        suggestions = generate_suggestions(
+    resume_analysis,
+    score_result
+)
 
         analysis_record = Analysis(
             resume_name=file.filename,
@@ -119,7 +124,8 @@ async def analyze_resume_api(
             "analysis_id": analysis_record.id,
             "filename": file.filename,
             "analysis": resume_analysis,
-            "score": score_result
+            "score": score_result,
+            "suggestions": suggestions
         }
 
     except HTTPException:
