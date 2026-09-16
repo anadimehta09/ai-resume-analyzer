@@ -1,6 +1,38 @@
-# Skills commonly found in technical resumes
+SKILL_ALIASES = {
+    "ml": "machine learning",
+    "machine-learning": "machine learning",
+    "ai/ml": "artificial intelligence",
+    "ai & ml": "artificial intelligence",
+
+    "rest api": "restful api",
+    "rest apis": "restful api",
+    "restful apis": "restful api",
+
+    "reactjs": "react",
+    "react.js": "react",
+
+    "nodejs": "node.js",
+    "node": "node.js",
+
+    "postgres": "postgresql",
+
+    "mongo": "mongodb",
+
+    "sklearn": "scikit-learn",
+    "scikit learn": "scikit-learn",
+
+    "gen ai": "generative ai",
+    "gen-ai": "generative ai",
+
+    "llms": "llm",
+    "large language models": "large language model",
+
+    "rag": "retrieval augmented generation",
+}
+
+
 SKILLS = [
-    # Programming Languages
+   
     "python",
     "java",
     "c",
@@ -93,7 +125,7 @@ SKILLS = [
 ]
 
 
-# Keywords that can indicate educational qualifications
+
 EDUCATION_KEYWORDS = [
     "education",
     "academic",
@@ -132,7 +164,6 @@ EDUCATION_KEYWORDS = [
 ]
 
 
-# Keywords related to professional experience
 EXPERIENCE_KEYWORDS = [
     "experience",
     "work experience",
@@ -169,7 +200,7 @@ EXPERIENCE_KEYWORDS = [
 ]
 
 
-# Keywords that help identify project sections
+
 PROJECT_KEYWORDS = [
     "project",
     "projects",
@@ -190,7 +221,7 @@ PROJECT_KEYWORDS = [
 ]
 
 
-# Keywords related to certifications and courses
+
 CERTIFICATION_KEYWORDS = [
     "certification",
     "certifications",

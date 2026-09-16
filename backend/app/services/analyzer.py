@@ -2,6 +2,7 @@ import re
 
 from app.utils.resume_keywords import (
     SKILLS,
+    SKILL_ALIASES,
     EDUCATION_KEYWORDS,
     EXPERIENCE_KEYWORDS,
     PROJECT_KEYWORDS,
@@ -9,24 +10,39 @@ from app.utils.resume_keywords import (
 )
 
 
-def find_keywords(text: str, keywords: list[str]) -> list[str]:
+def keyword_exists(text: str, keyword: str) -> bool:
     """
-    Find keywords present in the resume text
-    while reducing false-positive substring matches.
+    Check whether a keyword exists as a complete term.
     """
-
     text = text.lower()
+    keyword = keyword.lower().strip()
 
+    pattern = r"(?<!\w)" + re.escape(keyword) + r"(?!\w)"
+
+    return re.search(pattern, text) is not None
+
+
+def find_keyword_matches(
+    text: str,
+    keywords: list[str]
+) -> list[str]:
+    """
+    Find keywords and their aliases present in the text.
+    """
     found = []
 
     for keyword in keywords:
-        keyword = keyword.lower().strip()
 
-        # Escape special regex characters such as +, ., etc.
-        pattern = r"(?<!\w)" + re.escape(keyword) + r"(?!\w)"
-
-        if re.search(pattern, text):
+        if keyword_exists(text, keyword):
             found.append(keyword)
+            continue
+
+        for alias, canonical_skill in SKILL_ALIASES.items():
+
+            if canonical_skill == keyword:
+                if keyword_exists(text, alias):
+                    found.append(keyword)
+                    break
 
     return found
 
@@ -36,24 +52,27 @@ def analyze_resume(text: str) -> dict:
     Analyze resume text and extract important keywords.
     """
 
-    skills = find_keywords(text, SKILLS)
+    skills = find_keyword_matches(
+        text,
+        SKILLS
+    )
 
-    education = find_keywords(
+    education = find_keyword_matches(
         text,
         EDUCATION_KEYWORDS
     )
 
-    experience = find_keywords(
+    experience = find_keyword_matches(
         text,
         EXPERIENCE_KEYWORDS
     )
 
-    projects = find_keywords(
+    projects = find_keyword_matches(
         text,
         PROJECT_KEYWORDS
     )
 
-    certifications = find_keywords(
+    certifications = find_keyword_matches(
         text,
         CERTIFICATION_KEYWORDS
     )
