@@ -132,3 +132,23 @@ async def analyze_resume_api(
             status_code=500,
             detail=f"Resume analysis failed: {str(e)}"
         )
+@router.get("/history")
+def get_analysis_history(
+    db: Session = Depends(get_db)
+):
+    analyses = (
+        db.query(Analysis)
+        .order_by(Analysis.created_at.desc())
+        .all()
+    )
+
+    return [
+        {
+            "id": analysis.id,
+            "resume_name": analysis.resume_name,
+            "ats_score": analysis.ats_score,
+            "match_percentage": analysis.match_percentage,
+            "created_at": analysis.created_at
+        }
+        for analysis in analyses
+    ]
