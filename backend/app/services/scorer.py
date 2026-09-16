@@ -3,6 +3,7 @@ from app.services.nlp_processor import preprocess_text
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+from app.services.semantic_matcher import calculate_semantic_similarity
 
 from app.utils.resume_keywords import (
     SKILLS,
@@ -32,18 +33,18 @@ def keyword_exists(text: str, keyword: str) -> bool:
 
 def skill_exists(text: str, skill: str) -> bool:
     """
-    Check whether a skill or one of its aliases
+    Check whether a canonical skill or any of its aliases
     exists in the given text.
     """
 
     if keyword_exists(text, skill):
         return True
 
-    for alias, canonical_skill in SKILL_ALIASES.items():
+    aliases = SKILL_ALIASES.get(skill, [])
 
-        if canonical_skill == skill:
-            if keyword_exists(text, alias):
-                return True
+    for alias in aliases:
+        if keyword_exists(text, alias):
+            return True
 
     return False
 
@@ -117,12 +118,26 @@ def score_resume(
     resume_analysis: dict
 ) -> dict:
     """
-    Generate complete resume scoring results.
+    Generate complete resume scoring results using
+    lexical and semantic similarity.
     """
 
-    similarity_score = calculate_similarity(
+    tfidf_similarity_score = calculate_similarity(
         resume_text,
         job_description
+    )
+
+    semantic_similarity_score = calculate_semantic_similarity(
+        resume_text,
+        job_description
+    )
+
+    combined_similarity_score = round(
+        (
+            tfidf_similarity_score * 0.40
+            + semantic_similarity_score * 0.60
+        ),
+        2
     )
 
     matching_skills, missing_skills = find_matching_skills(
@@ -156,11 +171,22 @@ def score_resume(
 
     return {
         "ats_score": ats_score,
-        "similarity_score": similarity_score,
+
+        "similarity_score": tfidf_similarity_score,
+
+        "semantic_similarity_score": semantic_similarity_score,
+
+        "combined_similarity_score": combined_similarity_score,
+
         "keyword_score": keyword_score,
+
         "parseability_score": parseability_score,
+
         "section_score": section_score,
+
         "experience_impact_score": experience_impact_score,
+
         "matching_skills": matching_skills,
+
         "missing_skills": missing_skills,
     }

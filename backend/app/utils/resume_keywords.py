@@ -1,38 +1,68 @@
 SKILL_ALIASES = {
-    "ml": "machine learning",
-    "machine-learning": "machine learning",
-    "ai/ml": "artificial intelligence",
-    "ai & ml": "artificial intelligence",
+    "machine learning": [
+        "ml",
+        "machine-learning",
+    ],
 
-    "rest api": "restful api",
-    "rest apis": "restful api",
-    "restful apis": "restful api",
+    "artificial intelligence": [
+        "ai",
+        "a.i.",
+        "ai/ml",
+        "ai & ml",
+    ],
 
-    "reactjs": "react",
-    "react.js": "react",
+    "restful api": [
+        "rest api",
+        "rest apis",
+        "restful apis",
+    ],
 
-    "nodejs": "node.js",
-    "node": "node.js",
+    "react": [
+        "reactjs",
+        "react.js",
+    ],
 
-    "postgres": "postgresql",
+    "node.js": [
+        "nodejs",
+        "node",
+    ],
 
-    "mongo": "mongodb",
+    "express.js": [
+        "express",
+    ],
 
-    "sklearn": "scikit-learn",
-    "scikit learn": "scikit-learn",
+    "postgresql": [
+        "postgres",
+    ],
 
-    "gen ai": "generative ai",
-    "gen-ai": "generative ai",
+    "mongodb": [
+        "mongo",
+    ],
 
-    "llms": "llm",
-    "large language models": "large language model",
+    "scikit-learn": [
+        "sklearn",
+        "scikit learn",
+    ],
 
-    "rag": "retrieval augmented generation",
+    "generative ai": [
+        "gen ai",
+        "gen-ai",
+    ],
+
+    "llm": [
+        "llms",
+        "large language model",
+        "large language models",
+    ],
+
+    "retrieval augmented generation": [
+        "rag",
+        "retrieval-augmented generation",
+    ],
 }
 
-
 SKILLS = [
-   
+    # Programming Languages
     "python",
     "java",
     "c",
@@ -41,7 +71,6 @@ SKILLS = [
     "javascript",
     "typescript",
     "go",
-    "golang",
     "rust",
     "php",
     "ruby",
@@ -52,19 +81,16 @@ SKILLS = [
     "html",
     "css",
     "react",
-    "react.js",
     "next.js",
     "angular",
     "vue.js",
     "node.js",
-    "express",
     "express.js",
 
     # Python / Backend
     "fastapi",
     "django",
     "flask",
-    "rest api",
     "restful api",
     "graphql",
 
@@ -81,7 +107,6 @@ SKILLS = [
     "machine learning",
     "deep learning",
     "artificial intelligence",
-    "ai",
     "nlp",
     "natural language processing",
     "computer vision",
@@ -97,11 +122,7 @@ SKILLS = [
 
     # Generative AI
     "generative ai",
-    "genai",
     "llm",
-    "large language model",
-    "langchain",
-    "rag",
     "retrieval augmented generation",
     "prompt engineering",
     "agentic ai",
