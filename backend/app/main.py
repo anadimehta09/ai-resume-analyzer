@@ -22,6 +22,7 @@ app.add_middleware(
     "http://localhost:5173",
     "https://ai-resume-analyzer-348h92rlc-anadimehta09.vercel.app"
 ],
+    allow_origin_regex=r"https://ai-resume-analyzer-[a-z0-9-]+-anadimehta09\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
