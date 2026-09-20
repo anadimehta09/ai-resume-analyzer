@@ -2,6 +2,10 @@ venv/
 __pycache__/
 *.pyc
 .env
+.env.local
 *.db
 uploads/*
 !uploads/.gitkeep
+
+# Backend uploaded files
+backend/app/uploads/

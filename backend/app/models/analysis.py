@@ -8,6 +8,7 @@ class Analysis(Base):
     __tablename__ = "analyses"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String(100), nullable=False, index=True)
 
     # Resume information
     resume_name = Column(String(255), nullable=False)

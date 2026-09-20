@@ -6,6 +6,7 @@ from fastapi import (
     HTTPException,
     Depends
 )
+from app.utils.auth import get_current_user
 from sqlalchemy.orm import Session
 from pathlib import Path
 import shutil
@@ -59,7 +60,8 @@ async def upload_resume(file: UploadFile = File(...)):
 async def analyze_resume_api(
     file: UploadFile = File(...),
     job_description: str = Form(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
 
     file_extension = Path(file.filename).suffix.lower()
@@ -101,8 +103,10 @@ async def analyze_resume_api(
     resume_analysis,
     score_result
 )
+        print("CURRENT USER ID:", current_user.id)
 
         analysis_record = Analysis(
+    user_id=str(current_user.id),
     resume_name=file.filename,
     job_description=job_description,
 
@@ -161,10 +165,12 @@ async def analyze_resume_api(
         )
 @router.get("/history")
 def get_analysis_history(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
     analyses = (
         db.query(Analysis)
+        .filter(Analysis.user_id == str(current_user.id))
         .order_by(Analysis.created_at.desc())
         .all()
     )
@@ -183,11 +189,15 @@ def get_analysis_history(
 @router.get("/history/{analysis_id}")
 def get_analysis_details(
     analysis_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
     analysis = (
         db.query(Analysis)
-        .filter(Analysis.id == analysis_id)
+        .filter(
+        Analysis.id == analysis_id,
+        Analysis.user_id == str(current_user.id)
+        )
         .first()
     )
 

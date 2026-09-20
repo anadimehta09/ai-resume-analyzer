@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { supabase } from "./lib/supabaseClient";
 
 /**
  * AI Resume Analyzer — frontend
@@ -15,6 +16,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
  */
 
 const API_BASE = "https://ai-resume-analyzer-1-1yt7.onrender.com";
+
 const ACCEPTED_EXTENSIONS = [".pdf", ".docx"];
 const MAX_FILE_SIZE_MB = 10;
 
@@ -296,10 +298,21 @@ const [historyDetailError, setHistoryDetailError] = useState("");
       formData.append("file", file);
       formData.append("job_description", jobDescription);
 
-      const response = await fetch(`${API_BASE}/resume/analyze`, {
-        method: "POST",
-        body: formData,
-      });
+      const {
+  data: { session },
+} = await supabase.auth.getSession();
+
+if (!session) {
+  throw new Error("Please login before analyzing your resume.");
+}
+
+const response = await fetch(`${API_BASE}/resume/analyze`, {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${session.access_token}`,
+  },
+  body: formData,
+});
 
       if (!response.ok) {
         let message = `Analysis failed (status ${response.status}).`;
@@ -333,7 +346,19 @@ const [historyDetailError, setHistoryDetailError] = useState("");
     setHistoryLoading(true);
     setHistoryError("");
     try {
-      const response = await fetch(`${API_BASE}/resume/history`);
+      const {
+  data: { session },
+} = await supabase.auth.getSession();
+
+if (!session) {
+  throw new Error("Please login before viewing history.");
+}
+
+const response = await fetch(`${API_BASE}/resume/history`, {
+  headers: {
+    Authorization: `Bearer ${session.access_token}`,
+  },
+});
       if (!response.ok) {
         throw new Error(`Couldn't load history (status ${response.status}).`);
       }
@@ -355,9 +380,22 @@ const [historyDetailError, setHistoryDetailError] = useState("");
   setHistoryDetailLoading(true);
 
   try {
-    const response = await fetch(
-      `${API_BASE}/resume/history/${analysisId}`
-    );
+    const {
+  data: { session },
+} = await supabase.auth.getSession();
+
+if (!session) {
+  throw new Error("Please login before viewing analysis details.");
+}
+
+const response = await fetch(
+  `${API_BASE}/resume/history/${analysisId}`,
+  {
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+    },
+  }
+);
 
     if (!response.ok) {
       throw new Error(
