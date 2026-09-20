@@ -26,11 +26,28 @@ function formatBytes(bytes) {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
-
 function formatDate(value) {
   if (!value) return "—";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return String(value);
+
+  let dateValue = value;
+
+  // Backend stores created_at as UTC without timezone information.
+  // Tell JavaScript that the timestamp is UTC before converting
+  // it to the user's local timezone.
+  if (
+    typeof dateValue === "string" &&
+    !dateValue.endsWith("Z") &&
+    !/[+-]\d{2}:\d{2}$/.test(dateValue)
+  ) {
+    dateValue = `${dateValue}Z`;
+  }
+
+  const d = new Date(dateValue);
+
+  if (Number.isNaN(d.getTime())) {
+    return String(value);
+  }
+
   return d.toLocaleString(undefined, {
     year: "numeric",
     month: "short",
@@ -284,6 +301,13 @@ const [historyDetailError, setHistoryDetailError] = useState("");
     setResult(null);
     setAnalyzeError("");
   };
+  const handleLogout = async () => {
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    alert(error.message || "Logout failed.");
+  }
+};
 
   const canAnalyze = Boolean(file) && jobDescription.trim().length > 0 && !loading;
 
@@ -471,9 +495,17 @@ const response = await fetch(
         </nav>
 
         <div className="rail-footer">
-          <p>Connected to</p>
-          <code>{API_BASE}</code>
-        </div>
+  <button
+    type="button"
+    className="logout-btn"
+    onClick={handleLogout}
+  >
+    Logout
+  </button>
+
+  <p>Connected to</p>
+  <code>{API_BASE}</code>
+</div>
       </aside>
 
       <main id="main-content" className="main">
@@ -1004,6 +1036,27 @@ function GlobalStyles() {
         font-size: 0.72rem;
         word-break: break-all;
       }
+        .logout-btn {
+  width: 100%;
+  margin-bottom: 16px;
+  padding: 9px 12px;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-sm);
+  background: var(--paper-raised);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.logout-btn:hover {
+  background: var(--clay-soft);
+  border-color: var(--clay);
+  color: var(--clay);
+}
 
       /* ---------- main ---------- */
       .main { padding: 40px 48px 80px; min-width: 0; }
