@@ -18,6 +18,8 @@ from app.services.parser import extract_resume_text
 from app.services.analyzer import analyze_resume
 from app.services.scorer import score_resume
 from app.services.suggestions import generate_suggestions
+from app.services.gemini_service import generate_resume_feedback
+
 
 
 router = APIRouter(
@@ -100,10 +102,24 @@ async def analyze_resume_api(
             resume_analysis
         )
         suggestions = generate_suggestions(
-    resume_analysis,
-    score_result
-)
+        resume_analysis,
+        score_result
+        )
+        try:
+            genai_feedback = generate_resume_feedback(
+                resume_text=resume_text,
+                job_description=job_description,
+                score_result=score_result,
+                resume_analysis=resume_analysis
+            )
+        except Exception as e:
+            print(f"Gemini feedback failed: {e}")
+            genai_feedback = {
+                "error": "AI feedback is temporarily unavailable"
+            }
+
         print("CURRENT USER ID:", current_user.id)
+        print("GENAI FEEDBACK:", genai_feedback)
 
         analysis_record = Analysis(
     user_id=str(current_user.id),
@@ -150,7 +166,8 @@ async def analyze_resume_api(
             "filename": file.filename,
             "analysis": resume_analysis,
             "score": score_result,
-            "suggestions": suggestions
+            "suggestions": suggestions,
+            "genai_feedback": genai_feedback
         }
 
     except HTTPException:
