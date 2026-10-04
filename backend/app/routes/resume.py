@@ -151,9 +151,8 @@ async def analyze_resume_api(
     ),
 
     # Suggestions
-    suggestions=json.dumps(
-        suggestions
-    )
+    suggestions=json.dumps(suggestions),
+    genai_feedback=json.dumps(genai_feedback)
 )
 
         db.add(analysis_record)
@@ -252,5 +251,10 @@ def get_analysis_details(
 
         "suggestions": json.loads(
             analysis.suggestions or "[]"
-        )
+        ),
+        "genai_feedback": (
+    json.loads(analysis.genai_feedback)
+    if analysis.genai_feedback
+    else None
+),
     }

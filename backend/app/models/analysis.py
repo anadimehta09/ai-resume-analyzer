@@ -36,6 +36,8 @@ class Analysis(Base):
 
     # Improvement suggestions
     suggestions = Column(Text, nullable=True)
+    # Gemini AI feedback
+    genai_feedback = Column(Text, nullable=True)
 
     created_at = Column(
         DateTime,
