@@ -577,12 +577,13 @@ function AnalyzePage(props) {
   if (result) {
     return (
       <ResultsView
-        score={score}
-        analysis={analysis}
-        suggestions={suggestions}
-        filename={filename}
-        onReset={onReset}
-      />
+  score={score}
+  analysis={analysis}
+  suggestions={suggestions}
+  filename={filename}
+  genaiFeedback={result?.genai_feedback}
+  onReset={onReset}
+/>
     );
   }
 
@@ -701,10 +702,39 @@ function AnalyzeSkeleton() {
 
 /* ----------------------------- Results view ----------------------------- */
 
-function ResultsView({ score, analysis, suggestions, filename, onReset }) {
+function ResultsView({
+  score,
+  analysis,
+  suggestions,
+  filename,
+  genaiFeedback,
+  onReset,
+}) {
   const matching = Array.isArray(score.matching_skills) ? score.matching_skills : [];
   const missing = Array.isArray(score.missing_skills) ? score.missing_skills : [];
+  const feedback = genaiFeedback && !genaiFeedback.error
+  ? genaiFeedback
+  : null;
 
+const renderFeedbackItems = (items) => {
+  if (Array.isArray(items)) {
+    return (
+      <ul>
+        {items.map((item, index) => (
+          <li key={index}>
+            {typeof item === "string" ? item : JSON.stringify(item)}
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  if (typeof items === "string" && items.trim()) {
+    return <p>{items}</p>;
+  }
+
+  return <p className="list-card-empty">No feedback available.</p>;
+};
   return (
     <div className="page">
       <div className="results-header">
@@ -765,36 +795,109 @@ function ResultsView({ score, analysis, suggestions, filename, onReset }) {
         </div>
       </section>
 
-      <section>
-        <SectionHeading eyebrow="Extracted from your resume" title="Resume analysis" />
-        <div className="analysis-grid">
-          <ListCard title="Skills" items={analysis.skills} emptyText="No skills detected." />
-          <ListCard title="Education" items={analysis.education} emptyText="No education entries detected." />
-          <ListCard title="Experience" items={analysis.experience} emptyText="No experience entries detected." />
-          <ListCard title="Projects" items={analysis.projects} emptyText="No projects detected." />
-          <ListCard
-            title="Certifications"
-            items={analysis.certifications}
-            emptyText="No certifications detected."
-          />
-        </div>
-      </section>
+      
 
-      <section>
-        <SectionHeading eyebrow="What to fix next" title="Resume improvement suggestions" />
-        {Array.isArray(suggestions) && suggestions.length ? (
-          <ol className="suggestions-list">
-            {suggestions.map((s, i) => (
-              <li key={i}>
-                <span className="suggestion-index">{i + 1}</span>
-                <span>{typeof s === "string" ? s : JSON.stringify(s)}</span>
-              </li>
-            ))}
-          </ol>
-        ) : (
-          <p className="skills-empty">No suggestions were returned for this resume.</p>
-        )}
-      </section>
+      
+     {/* Gemini AI Resume Feedback */}
+<section className="gemini-feedback-section" aria-labelledby="gemini-heading">
+  <div className="gemini-section-header">
+    <div className="gemini-heading-content">
+      <h2 id="gemini-heading">Resume review</h2>
+      <p>
+        Personalized suggestions to strengthen your resume and match it
+        more closely to your target role.
+      </p>
+    </div>
+
+    <div className="gemini-status">
+      <span className="gemini-status-dot" />
+      Powered by Gemini
+    </div>
+  </div>
+
+  {!genaiFeedback ? (
+    <div className="gemini-empty-state" role="status">
+      <h3>No AI feedback yet</h3>
+      <p>Analyze your resume again to generate personalized feedback.</p>
+    </div>
+  ) : genaiFeedback.error ? (
+    <div className="gemini-error-state" role="alert">
+      <h3>We couldn't generate feedback</h3>
+      <p>{genaiFeedback.error}</p>
+    </div>
+  ) : (
+    <>
+      {genaiFeedback.overall_feedback && (
+        <div className="gemini-overview-card">
+          <h3>Overall assessment</h3>
+          <p>{genaiFeedback.overall_feedback}</p>
+        </div>
+      )}
+
+      <div className="gemini-feedback-grid">
+        <div className="gemini-feedback-card gemini-card--green">
+          <div className="gemini-card-heading">
+            <span className="gemini-icon" aria-hidden="true">✓</span>
+            <div>
+              <h3>Key strengths</h3>
+              <p>What already works in your resume</p>
+            </div>
+          </div>
+          {renderFeedbackItems(genaiFeedback.strengths)}
+        </div>
+
+        <div className="gemini-feedback-card gemini-card--amber">
+          <div className="gemini-card-heading">
+            <span className="gemini-icon" aria-hidden="true">↗</span>
+            <div>
+              <h3>Areas to improve</h3>
+              <p>Where a few changes will help most</p>
+            </div>
+          </div>
+          {renderFeedbackItems(genaiFeedback.improvements)}
+        </div>
+
+        <div className="gemini-feedback-card gemini-card--blue">
+          <div className="gemini-card-heading">
+            <span className="gemini-icon" aria-hidden="true">⌕</span>
+            <div>
+              <h3>Skill gap analysis</h3>
+              <p>Skills the role asks for that are missing</p>
+            </div>
+          </div>
+          {renderFeedbackItems(genaiFeedback.missing_skills_explanation)}
+        </div>
+
+        <div className="gemini-feedback-card gemini-card--purple">
+          <div className="gemini-card-heading">
+            <span className="gemini-icon" aria-hidden="true">✎</span>
+            <div>
+              <h3>Suggested bullet points</h3>
+              <p>Stronger ways to describe your experience</p>
+            </div>
+          </div>
+          {renderFeedbackItems(genaiFeedback.rewritten_bullets)}
+        </div>
+
+        <div className="gemini-feedback-card gemini-action-card gemini-card--blue">
+          <div className="gemini-card-heading">
+            <span className="gemini-icon" aria-hidden="true">→</span>
+            <div>
+              <h3>Action plan</h3>
+              <p>Next steps, in order</p>
+            </div>
+          </div>
+          {renderFeedbackItems(genaiFeedback.action_plan)}
+        </div>
+      </div>
+
+      <p className="gemini-disclaimer">
+        These are AI-generated suggestions. Check them for accuracy and only
+        add skills and experience you actually have.
+      </p>
+    </>
+  )}
+</section>
 
       <div className="analyze-actions">
         <button type="button" className="btn btn--primary btn--large" onClick={onReset}>
@@ -1447,6 +1550,352 @@ function GlobalStyles() {
       @media (prefers-reduced-motion: reduce) {
         .gauge-fill, .metric-fill, .spinner, .skeleton-row { animation: none !important; transition: none !important; }
       }
+        .gemini-feedback-section {
+  --gemini-bg: #f6f7fb;
+  --gemini-surface: #ffffff;
+  --gemini-border: #e4e7ee;
+  --gemini-text: #151a2c;
+  --gemini-muted: #5d6578;
+  --gemini-accent: #4f46e5;
+
+  --gemini-green: #15803d;
+  --gemini-green-soft: #e7f6ec;
+  --gemini-amber: #b45309;
+  --gemini-amber-soft: #fdf1dc;
+  --gemini-blue: #1d4ed8;
+  --gemini-blue-soft: #e6eefe;
+  --gemini-purple: #7e22ce;
+  --gemini-purple-soft: #f3e8ff;
+  --gemini-red: #b42318;
+  --gemini-red-soft: #fdecea;
+
+  --gemini-radius: 14px;
+  --gemini-shadow: 0 1px 2px rgba(16, 24, 40, 0.04),
+    0 4px 14px rgba(16, 24, 40, 0.04);
+
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 40px;
+  padding: 32px;
+  background: var(--gemini-bg);
+  border: 1px solid var(--gemini-border);
+  border-radius: 20px;
+  color: var(--gemini-text);
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.6;
+}
+
+.gemini-feedback-section *,
+.gemini-feedback-section *::before,
+.gemini-feedback-section *::after {
+  box-sizing: border-box;
+}
+
+@media (prefers-color-scheme: dark) {
+  .gemini-feedback-section {
+    --gemini-bg: #11141f;
+    --gemini-surface: #181c2a;
+    --gemini-border: #2a2f42;
+    --gemini-text: #eef0f7;
+    --gemini-muted: #a0a7bb;
+    --gemini-accent: #8b87ff;
+
+    --gemini-green: #5bd48a;
+    --gemini-green-soft: #14301f;
+    --gemini-amber: #f2b45a;
+    --gemini-amber-soft: #38290f;
+    --gemini-blue: #7aa5ff;
+    --gemini-blue-soft: #16264d;
+    --gemini-purple: #c79bff;
+    --gemini-purple-soft: #2c1a45;
+    --gemini-red: #ff8f84;
+    --gemini-red-soft: #3a1815;
+
+    --gemini-shadow: none;
+  }
+}
+
+/* ---------- Header ---------- */
+
+.gemini-section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.gemini-heading-content h2 {
+  margin: 0 0 6px;
+  font-size: 1.65rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.gemini-heading-content p {
+  margin: 0;
+  max-width: 60ch;
+  color: var(--gemini-muted);
+  font-size: 0.975rem;
+}
+
+.gemini-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 7px 14px;
+  background: var(--gemini-surface);
+  border: 1px solid var(--gemini-border);
+  border-radius: 999px;
+  color: var(--gemini-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.gemini-status-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--gemini-green);
+  border-radius: 50%;
+}
+
+/* ---------- Overall assessment (main highlight) ---------- */
+
+.gemini-overview-card {
+  margin-bottom: 20px;
+  padding: 26px 28px;
+  background: var(--gemini-surface);
+  border: 1px solid var(--gemini-border);
+  border-left: 5px solid var(--gemini-accent);
+  border-radius: var(--gemini-radius);
+  box-shadow: var(--gemini-shadow);
+}
+
+.gemini-overview-card h3 {
+  margin: 0 0 10px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.gemini-overview-card p {
+  margin: 0;
+  max-width: 75ch;
+  font-size: 1.02rem;
+  line-height: 1.75;
+}
+
+/* ---------- Grid + cards ---------- */
+
+.gemini-feedback-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+
+.gemini-feedback-card {
+  --tone: var(--gemini-accent);
+  --tone-soft: var(--gemini-blue-soft);
+
+  padding: 24px;
+  background: var(--gemini-surface);
+  border: 1px solid var(--gemini-border);
+  border-radius: var(--gemini-radius);
+  box-shadow: var(--gemini-shadow);
+}
+
+.gemini-card--green  { --tone: var(--gemini-green);  --tone-soft: var(--gemini-green-soft); }
+.gemini-card--amber  { --tone: var(--gemini-amber);  --tone-soft: var(--gemini-amber-soft); }
+.gemini-card--blue   { --tone: var(--gemini-blue);   --tone-soft: var(--gemini-blue-soft); }
+.gemini-card--purple { --tone: var(--gemini-purple); --tone-soft: var(--gemini-purple-soft); }
+
+.gemini-action-card {
+  grid-column: 1 / -1;
+}
+
+.gemini-card-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--gemini-border);
+}
+
+.gemini-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  background: var(--tone-soft);
+  border-radius: 10px;
+  color: var(--tone);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.gemini-card-heading h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+.gemini-card-heading p {
+  margin: 2px 0 0;
+  color: var(--gemini-muted);
+  font-size: 0.85rem;
+}
+
+/* ---------- Content rendered by renderFeedbackItems ---------- */
+
+.gemini-feedback-card ul,
+.gemini-feedback-card ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gemini-feedback-card li {
+  position: relative;
+  padding-left: 22px;
+  font-size: 0.94rem;
+  line-height: 1.65;
+}
+
+.gemini-feedback-card li + li {
+  margin-top: 12px;
+}
+
+.gemini-feedback-card li::before {
+  content: "";
+  position: absolute;
+  top: 0.62em;
+  left: 2px;
+  width: 7px;
+  height: 7px;
+  background: var(--tone);
+  border-radius: 50%;
+}
+
+/* plain <p> output (outside the heading) */
+.gemini-feedback-card > p {
+  margin: 0 0 12px;
+  font-size: 0.94rem;
+}
+
+/* ---------- Action plan: numbered steps ---------- */
+
+.gemini-action-card ul,
+.gemini-action-card ol {
+  counter-reset: gemini-step;
+}
+
+.gemini-action-card li {
+  counter-increment: gemini-step;
+  min-height: 30px;
+  padding-left: 44px;
+}
+
+.gemini-action-card li::before {
+  content: counter(gemini-step);
+  top: 0;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  background: var(--tone-soft);
+  border-radius: 50%;
+  color: var(--tone);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+/* ---------- Empty and error states ---------- */
+
+.gemini-empty-state,
+.gemini-error-state {
+  padding: 36px 24px;
+  border-radius: var(--gemini-radius);
+  text-align: center;
+}
+
+.gemini-empty-state {
+  background: var(--gemini-surface);
+  border: 1px dashed var(--gemini-border);
+}
+
+.gemini-error-state {
+  background: var(--gemini-red-soft);
+  border: 1px solid var(--gemini-red);
+}
+
+.gemini-empty-state h3,
+.gemini-error-state h3 {
+  margin: 0 0 6px;
+  font-size: 1.1rem;
+  font-weight: 650;
+}
+
+.gemini-error-state h3 {
+  color: var(--gemini-red);
+}
+
+.gemini-empty-state p,
+.gemini-error-state p {
+  max-width: 50ch;
+  margin: 0 auto;
+  color: var(--gemini-muted);
+  font-size: 0.94rem;
+}
+
+/* ---------- Disclaimer ---------- */
+
+.gemini-disclaimer {
+  margin: 24px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--gemini-border);
+  color: var(--gemini-muted);
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 860px) {
+  .gemini-feedback-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .gemini-feedback-section {
+    margin-top: 28px;
+    padding: 20px 16px;
+    border-radius: 16px;
+  }
+
+  .gemini-section-header {
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .gemini-heading-content h2 {
+    font-size: 1.4rem;
+  }
+
+  .gemini-overview-card,
+  .gemini-feedback-card {
+    padding: 20px 18px;
+  }
+}
     `}</style>
   );
 }

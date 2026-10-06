@@ -12,7 +12,7 @@ from google import genai
 BACKEND_ENV = Path(__file__).resolve().parents[2] / ".env"
 load_dotenv(BACKEND_ENV)
 
-MODEL_NAME = "gemini-3.8-flash"
+MODEL_NAME = "gemini-3.5-flash"
 
 
 def generate_resume_feedback(
